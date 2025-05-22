@@ -1,198 +1,177 @@
+import 'package:first_app/globals.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'styleDetail.dart';
 
-class TodayCoordiPage extends StatelessWidget {
+class TodayCoordiPage extends StatefulWidget {
   const TodayCoordiPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final coordiItems = [
-      {
-        "image": "assets/coordi1.jpg",
-        "title": "깔끔하고 쉬운 남친 코디🍀",
-        "tags": "#데일리룩 #캠퍼스룩 #데이트룩"
-      },
-      {
-        "image": "assets/coordi2.jpg",
-        "title": "부담없이 깔끔하게 입는 여름코디",
-        "tags": "#데일리룩 #캐주얼 #미니멀"
-      },
-      {
-        "image": "assets/coordi3.jpg",
-        "title": "🖤일본 여행 반팔 가디건🖤",
-        "tags": "#데일리룩 #여행룩 #캐주얼"
-      },
-      {
-        "image": "assets/coordi4.jpg",
-        "title": "4계절 활용 가능한 트레이닝!",
-        "tags": "#데일리룩 #캠퍼스룩 #캐주얼"
-      },
-    ];
-
-    return Scaffold(
-      appBar: AppBar(title: const Text("오늘의 코디")),
-      body: Column(
-        children: [
-          const SizedBox(height: 8),
-          _buildFilterBar(),
-          const SizedBox(height: 4),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: GridView.builder(
-                itemCount: coordiItems.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.68,
-                ),
-                itemBuilder: (context, index) {
-                  final item = coordiItems[index];
-                  return CoordCard(
-                    imagePath: item['image']!,
-                    title: item['title']!,
-                    tags: item['tags']!,
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterBar() {
-    final filters = ['봄', '여름', '스트릿', '미니멀', '남친룩'];
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          return FilterChip(
-            label: Text(filters[index], style: const TextStyle(fontWeight: FontWeight.bold)),
-            shape: StadiumBorder(
-              side: BorderSide(color: Colors.grey.shade300),
-            ),
-            backgroundColor: Colors.grey.shade100,
-            selectedColor: Colors.blue.shade100,
-            selected: false,
-            onSelected: (bool selected) {},
-          );
-        },
-      ),
-    );
-  }
+  State<TodayCoordiPage> createState() => _TodayCoordiPageState();
 }
 
-class CoordCard extends StatefulWidget {
-  final String imagePath;
-  final String title;
-  final String tags;
-
-  const CoordCard({
-    super.key,
-    required this.imagePath,
-    required this.title,
-    required this.tags,
-  });
-
-  @override
-  State<CoordCard> createState() => _CoordCardState();
-}
-
-class _CoordCardState extends State<CoordCard> with SingleTickerProviderStateMixin {
-  bool liked = false;
-  int likeCount = 21;
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
+class _TodayCoordiPageState extends State<TodayCoordiPage> {
+  late Future<List<dynamic>> _fetchCoordiItems;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-      lowerBound: 0.8,
-      upperBound: 1.2,
-    );
-    _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _fetchCoordiItems = fetchCoordiItems();
   }
 
-  void _toggleLike() {
-    setState(() {
-      liked = !liked;
-      liked ? likeCount++ : likeCount--;
-    });
-    HapticFeedback.lightImpact();
-    _controller.forward().then((_) => _controller.reverse());
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Future<List<dynamic>> fetchCoordiItems() async {
+    final response = await http.get(Uri.parse('http://10.0.2.2:8000/posts'));
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.take(8).toList();
+    } else {
+      throw Exception('Failed to load coordi items');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(16),
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        elevation: 8,
+        centerTitle: true,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.emoji_events, color: Colors.amberAccent, size: 30),
+            SizedBox(width: 8),
+            Text(
+              "$globalRegionKr의 패션왕",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: Colors.amberAccent,
+                shadows: [
+                  Shadow(
+                    color: Colors.orangeAccent.withOpacity(0.6),
+                    offset: Offset(2, 2),
+                    blurRadius: 6,
+                  ),
+                  Shadow(
+                    color: Colors.black87,
+                    offset: Offset(1, 1),
+                    blurRadius: 3,
+                  ),
+                ],
+                letterSpacing: 1.2,
+              ),
+            ),
+            SizedBox(width: 8),
+            Icon(Icons.star, color: Colors.amberAccent, size: 28),
+          ],
+        ),
+        leading: Icon(Icons.shield, color: Colors.amberAccent),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search, color: Colors.amberAccent),
+            onPressed: () {},
+            tooltip: '검색',
+          ),
+          SizedBox(width: 8),
+        ],
+      ),
+      body: Column(
         children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.asset(
-                  widget.imagePath,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: 150,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 150,
-                    color: Colors.grey[300],
-                    child: const Center(child: Icon(Icons.image_not_supported, size: 40)),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: GestureDetector(
-                    onTap: _toggleLike,
-                    child: Icon(
-                      liked ? Icons.favorite : Icons.favorite_border,
-                      color: liked ? Colors.red : Colors.grey,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-            child: Text(widget.title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(widget.tags,
-                style: const TextStyle(color: Colors.blueGrey, fontSize: 12)),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 12, top: 4),
-            child: Text("♥ $likeCount", style: const TextStyle(fontSize: 12)),
+          Expanded(
+            child: FutureBuilder<List<dynamic>>(
+              future: _fetchCoordiItems,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('데이터를 불러오는 중 오류가 발생했습니다.'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('코디 아이템이 없습니다.'));
+                } else {
+                  final coordiItems = snapshot.data!;
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(12.0),
+                    itemCount: coordiItems.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.68,
+                        ),
+                    itemBuilder: (context, index) {
+                      final item = coordiItems[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => CoordDetailPage(
+                                    imageUrl: item['image_url'],
+                                    title: item['title'],
+                                    tags: item['tags'],
+                                    description: item['description'] ?? '',
+                                    temperature:
+                                        item['temperature']?.toString() ?? '',
+                                  ),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: Image.network(
+                                  item['image_url'],
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (_, __, ___) =>
+                                          Icon(Icons.image_not_supported),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item['title'],
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      (item['tags'] is List)
+                                          ? (item['tags'] as List).join(', ')
+                                          : item['tags'].toString(),
+                                      style: TextStyle(color: Colors.grey[600]),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),

@@ -4,8 +4,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'todayCoordiPage.dart';
+import 'uploadStyle.dart';
+import 'locationService.dart';
+import 'globals.dart';
+import 'lookbookScreen.dart';
 // splash screen
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // 위치 정보 등 비동기 초기화 전 필수
+
+
   runApp(const MyApp());
 }
 
@@ -67,11 +74,21 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _screens = [
     const MyHomePage(title: '오늘의 코디 추천'),
     const TodayCoordiPage(),
-    const Center(child: Text('게시판')),
+    const Center(child: Text('업로드')),
+    const LookbookPage(),
     const Center(child: Text('설정')),
   ];
 
   void _onItemTapped(int index) {
+    if (index == 2) {
+      
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const UploadStylePage()),
+      );
+      return; // 하단바 탭 전환 막기
+    }
+
     setState(() {
       _selectedIndex = index;
     });
@@ -108,19 +125,6 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class TourData {
-  final String? title;
-  final String? imagePath;
-
-  TourData({this.title, this.imagePath});
-  factory TourData.fromJason(Map<String, dynamic> json) {
-    return TourData(
-      title: json['title'],
-      imagePath: json['firstimage'],
-    );
-  }
-}
-
 class _MyHomePageState extends State<MyHomePage> {
   String weather = "불러오는 중...";
   String recommendation = "잠시만 기다려 주세요.";
@@ -133,22 +137,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> fetchDaejeonWeather() async {
   const apiKey = 'bb8e0ba2bfb53906a2bf3802059d4de5';
+  
+
   final url =
-      'https://api.openweathermap.org/data/2.5/weather?q=Daejeon,KR&appid=$apiKey&units=metric&lang=kr';
+      'https://api.openweathermap.org/data/2.5/weather?q=$globalRegion,KR&appid=$apiKey&units=metric&lang=kr';
 
   try {
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final temp = data['main']['temp'].round();
+      globaltemp = data['main']['temp'].round();
       final feelsLike = data['main']['feels_like'].round();
       final desc = data['weather'][0]['description'];
 
       setState(() {
-        weather = "$temp도, $desc";
-        recommendation = temp > 25
+        weather = "$globaltemp도, $desc";
+        recommendation = globaltemp > 25
             ? "얇은 반팔 + 린넨 팬츠 추천!"
-            : temp > 15
+            : globaltemp > 15
                 ? "가디건이나 셔츠 추천!"
                 : "보온이 되는 코트 추천!";
       });
@@ -168,12 +174,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   @override
- Widget build(BuildContext context) {
+@override
+Widget build(BuildContext context) {
   return SingleChildScrollView(
     child: Column(
       children: [
-        // 상단: 로고 + 검색창
-        Padding(
+         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -198,8 +204,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ],
           ),
         ),
-
-        // 🌤 날씨 카드
+        // ... 기존 상단 로고, 검색창, 날씨 카드 생략 ...
         Card(
           elevation: 2,
           margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -216,62 +221,123 @@ class _MyHomePageState extends State<MyHomePage> {
 
         const SizedBox(height: 16),
 
-        // 🧑‍💼 내 정보 카드
+        const SizedBox(height: 16),
+
+        // 내 정보 카드 + 활동 요약 합친 카드
         Card(
-          elevation: 3,
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 5,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 35,
-                  backgroundImage: AssetImage('assets/profile.jpg'), // 본인 이미지
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text("우수123", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    Text("💎 Platinum 티어", style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 8),
-                    Text("🏆 전체 사용자 중 42위"),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 45,
+                      backgroundImage: AssetImage('assets/profile.jpg'),
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent.withOpacity(0.85),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2.5),
+                        ),
+                        child: Center(
+                          child: Icon(Icons.shield, color: Colors.white, size: 22),
+                        ),
+                      ),
+                    ),
                   ],
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "우수123",
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: const [
+                          Icon(Icons.diamond, size: 18, color: Colors.blueAccent),
+                          SizedBox(width: 6),
+                          Text("Platinum 티어", style: TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: const [
+                          Icon(Icons.emoji_events, size: 18, color: Colors.amber),
+                          SizedBox(width: 6),
+                          Text("전체 사용자 중 42위"),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStat("코디", "14", icon: Icons.style),
+                          _buildStat("좋아요", "210", icon: Icons.favorite),
+                          _buildStat("댓글", "55", icon: Icons.comment),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
         ),
 
-        const SizedBox(height: 16),
-
-        // 📊 활동 요약
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStat("코디", "14"),
-              _buildStat("좋아요", "210"),
-              _buildStat("댓글", "55"),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
       ],
     ),
   );
 }
-Widget _buildStat(String label, String count) {
+
+Widget _buildStat(String label, String count, {IconData? icon}) {
   return Column(
     children: [
-      Text(count, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 4),
-      Text(label, style: const TextStyle(fontSize: 14)),
+      if (icon != null)
+        Icon(icon, color: Colors.blueAccent, size: 28),
+      const SizedBox(height: 8),
+      Text(
+        count,
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.blueAccent,
+          shadows: [
+            Shadow(
+              offset: Offset(1, 1),
+              blurRadius: 2,
+              color: Colors.black26,
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Colors.blueGrey,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     ],
   );
 }
-
 }
-
