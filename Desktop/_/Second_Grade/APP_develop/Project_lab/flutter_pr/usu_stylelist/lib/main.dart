@@ -7,10 +7,11 @@ import 'uploadStyle.dart';
 import 'locationService.dart';
 import 'globals.dart';
 import 'lookbookScreen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 // splash screen
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // 위치 정보 등 비동기 초기화 전 필수
-
+  await dotenv.load(fileName: 'assets/api_data.env');
 
   runApp(const MyApp());
 }
@@ -135,8 +136,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> fetchDaejeonWeather() async {
-  const apiKey = 'bb8e0ba2bfb53906a2bf3802059d4de5';
   
+  String apiKey = dotenv.get('apiKey');
 
   final url =
       'https://api.openweathermap.org/data/2.5/weather?q=$globalRegion,KR&appid=$apiKey&units=metric&lang=kr';

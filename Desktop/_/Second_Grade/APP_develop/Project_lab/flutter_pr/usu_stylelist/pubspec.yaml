@@ -29,6 +29,7 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   geocoding: ^3.0.0
+  flutter_dotenv: ^5.2.1
   geolocator: ^14.0.0
   photo_manager: ^3.7.0
   image_picker: ^1.0.4
@@ -77,6 +78,7 @@ flutter:
     - assets/dice-images/dice-6.png
     - assets/gifreb/flutter.png
     - assets/gifreb/logo.png
+    - assets/api_data.env
     
     
 
