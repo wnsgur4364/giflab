@@ -112,10 +112,17 @@ class _TodayCoordiPageState extends State<TodayCoordiPage> {
                                   (_) => CoordDetailPage(
                                     imageUrl: item['image_url'],
                                     title: item['title'],
-                                    tags: item['tags'],
+                                    tags:
+                                        item['tags'] is String
+                                            ? [item['tags']]
+                                            : item['tags'],
                                     description: item['description'] ?? '',
                                     temperature:
                                         item['temperature']?.toString() ?? '',
+                                    weather: item['weather']?.toString() ?? '',
+                                    username: item['username'] ?? '익명',
+                                    tier: item['tier'] ?? 'Bronze',
+                                    rank: item['rank'] ?? 9999,
                                   ),
                             ),
                           );

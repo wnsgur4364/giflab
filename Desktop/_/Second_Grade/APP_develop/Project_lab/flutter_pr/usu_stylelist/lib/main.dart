@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -172,8 +171,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-
-  @override
 @override
 Widget build(BuildContext context) {
   return SingleChildScrollView(
