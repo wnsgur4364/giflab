@@ -1,16 +1,14 @@
-# first_app
+# 👗 usu_stylelist
 
-A new Flutter project.
+**usu_stylelist**는 Flutter로 개발된 패션 스타일 추천 애플리케이션입니다.  
+사용자가 선택한 옵션을 바탕으로 다양한 스타일을 추천하며, 직관적인 UI와 간단한 기능을 통해 편리한 패션 탐색 경험을 제공합니다.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## ✨ 주요 기능
 
-A few resources to get you started if this is your first Flutter project:
+- 📋 스타일 리스트 표시
+- 🎯 사용자의 선택을 기반으로 스타일 추천
+- 💖 즐겨찾기 기능
+- 🔍 직관적이고 깔끔한 UI
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
