@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  shared_preferences: ^2.5.3
   geocoding: ^3.0.0
   flutter_dotenv: ^5.2.1
   geolocator: ^14.0.0
@@ -78,7 +79,11 @@ flutter:
     - assets/dice-images/dice-6.png
     - assets/gifreb/flutter.png
     - assets/gifreb/logo.png
+    - assets/gifreb/logo_no.png
     - assets/api_data.env
+    - assets/gifreb/google_login.png
+    - assets/gifreb/naver_login.png
+    - assets/gifreb/kakao_login.png
     
     
 

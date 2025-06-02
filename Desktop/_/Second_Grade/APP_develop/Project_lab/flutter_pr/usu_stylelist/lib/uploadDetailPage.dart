@@ -1,14 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:path/path.dart'as path;
-import 'dart:convert';
+import 'uploadfile.dart';
 import 'globals.dart';
-
 
 class UploadDetailPage extends StatefulWidget {
   final File imageFile;
-
   const UploadDetailPage({super.key, required this.imageFile});
 
   @override
@@ -17,132 +13,87 @@ class UploadDetailPage extends StatefulWidget {
 
 class _UploadDetailPageState extends State<UploadDetailPage> {
   final TextEditingController _descController = TextEditingController();
+  final TextEditingController _topController = TextEditingController();
+  final TextEditingController _bottomController = TextEditingController();
+  final TextEditingController _outerController = TextEditingController();
+  final TextEditingController _shoesController = TextEditingController();
+  final TextEditingController _etcController = TextEditingController();
+
   final List<String> _tags = ["스트릿", "미니멀", "캠퍼스룩"];
   final Set<String> _selectedTags = {};
 
-  @override
-  void dispose() {
-    _descController.dispose();
-    super.dispose();
-  }
-
   void _toggleTag(String tag) {
     setState(() {
-      if (_selectedTags.contains(tag)) {
-        _selectedTags.remove(tag);
-      } else {
-        _selectedTags.add(tag);
-      }
+      _selectedTags.contains(tag) ? _selectedTags.remove(tag) : _selectedTags.add(tag);
     });
   }
 
-  Future<void> uploadCoordiPost() async {
-    showDialog(
+  void _handleUpload() {
+    uploadCoordiPost(
+      imageFile: widget.imageFile,
+      description: _descController.text,
+      selectedTags: _selectedTags.toList(),
       context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      regionDetail: "", // 제거됨
+      top: _topController.text,
+      bottom: _bottomController.text,
+      outer: _outerController.text,
+      shoes: _shoesController.text,
+      etc: _etcController.text,
+      weather_desc: desc,
+      temperature_max: globalTempMax.toDouble(),
+      temperature_min: globalTempMin.toDouble(),
     );
+  }
 
-    final uri = Uri.parse('http://10.0.2.2:8000/upload');
-    final request = http.MultipartRequest('POST', uri);
-
-    request.files.add(await http.MultipartFile.fromPath(
-      'file',
-      widget.imageFile.path,
-      filename: path.basename(widget.imageFile.path),
-    ));
-
-    request.fields['description'] = _descController.text;
-    request.fields['tags'] = _selectedTags.join(', ');
-    request.fields['region'] = globalRegionKr;
-    request.fields['temperature'] = globaltemp.toString();
-
-    try {
-      final response = await request.send();
-
-      Navigator.pop(context); // 로딩 제거
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ 업로드 성공")),
-        );
-        Navigator.pop(context); // 이전 화면으로 이동
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("❌ 실패: ${response.statusCode}")),
-        );
-      }
-    } catch (e) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("⚠ 에러: $e")),
-      );
-    }
+  Widget _buildInput(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("코디 업로드"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: AppBar(title: const Text("코디 업로드")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.file(
-                widget.imageFile,
-                height: 250,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Card(
-              elevation: 2,
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: TextField(
-                  controller: _descController,
-                  decoration: const InputDecoration(
-                    hintText: "오늘의 코디를 소개해 주세요 😊",
-                    border: InputBorder.none,
-                  ),
-                  maxLines: 3,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
+            Image.file(widget.imageFile, height: 220, fit: BoxFit.cover),
             const SizedBox(height: 16),
-            Text("태그를 선택하세요", style: theme.textTheme.titleLarge),
-            const SizedBox(height: 8),
+            _buildInput("코디 설명", _descController),
+            _buildInput("상의 정보", _topController),
+            _buildInput("하의 정보", _bottomController),
+            _buildInput("아우터 정보", _outerController),
+            _buildInput("신발 정보", _shoesController),
+            _buildInput("기타 정보", _etcController),
+            const SizedBox(height: 16),
+            const Text("스타일 태그 선택", style: TextStyle(fontWeight: FontWeight.bold)),
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 8,
               children: _tags.map((tag) {
-                final isSelected = _selectedTags.contains(tag);
                 return ChoiceChip(
                   label: Text(tag),
-                  selected: isSelected,
+                  selected: _selectedTags.contains(tag),
                   onSelected: (_) => _toggleTag(tag),
-                  selectedColor: Colors.blueAccent,
                 );
               }).toList(),
             ),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: uploadCoordiPost,
-              child: const Text("공유하기"),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _handleUpload,
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text("공유하기"),
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
             ),
           ],
         ),
